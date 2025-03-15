@@ -6,7 +6,7 @@
 bl_info = {
         "name": "Select By Dimensions",
         "author": "todashuta",
-        "version": (0, 0, 1),
+        "version": (0, 0, "1-dev"),
         "blender": (3, 6, 0),
         "location": "3D Viewport > Select Menu > Select By Dimensions",
         "description": "Select/Deselect By Dimensions",
@@ -23,6 +23,7 @@ import numpy as np
 
 
 def get_evaluated_dimensions(depsgraph, obj):
+    #print(obj)
     try:
         obj_eval = obj.evaluated_get(depsgraph)
         mesh_from_eval = obj_eval.to_mesh()
@@ -66,7 +67,9 @@ class SelectByDimensions(bpy.types.Operator):
     def execute(self, context):
         depsgraph = context.evaluated_depsgraph_get()
         for ob in context.selectable_objects:
-            dimensions = get_evaluated_dimensions(depsgraph, ob)
+            if ob.name not in self._cache:
+                self._cache[ob.name] = get_evaluated_dimensions(depsgraph, ob)
+            dimensions = self._cache[ob.name]
             if dimensions is None:
                 continue
             dimx, dimy, dimz = dimensions
@@ -89,6 +92,7 @@ class SelectByDimensions(bpy.types.Operator):
         self.use_x = False
         self.use_y = False
         self.use_z = False
+        self._cache = {}
         return wm.invoke_props_popup(self, event)
 
     def draw(self, context):
