@@ -55,9 +55,13 @@ class SelectByDimensions(bpy.types.Operator):
     y_op: bpy.props.EnumProperty(default='gt', items=[('gt', 'Greater', ''), ('lt', 'Less', '')])
     z_op: bpy.props.EnumProperty(default='gt', items=[('gt', 'Greater', ''), ('lt', 'Less', '')])
 
-    x: bpy.props.FloatProperty(min=0)
-    y: bpy.props.FloatProperty(min=0)
-    z: bpy.props.FloatProperty(min=0, default=5.0)
+    x: bpy.props.FloatProperty(step=10, min=0)
+    y: bpy.props.FloatProperty(step=10, min=0)
+    z: bpy.props.FloatProperty(step=10, min=0, default=5.0)
+
+    def __init__(self):
+        self._cache = {}
+        #print("SelectByDimensions __init__ called", self)
 
     @classmethod
     def poll(cls, context):
@@ -65,11 +69,17 @@ class SelectByDimensions(bpy.types.Operator):
         return active_object and active_object.mode == 'OBJECT'
 
     def execute(self, context):
-        depsgraph = context.evaluated_depsgraph_get()
-        for ob in context.selectable_objects:
-            if ob.name not in self._cache:
+        if not self._cache:
+            wm = context.window_manager
+            wm.progress_begin(0, len(context.selectable_objects))
+            depsgraph = context.evaluated_depsgraph_get()
+            for i, ob in enumerate(context.selectable_objects):
                 self._cache[ob.name] = get_evaluated_dimensions(depsgraph, ob)
-            dimensions = self._cache[ob.name]
+                wm.progress_update(i)
+            wm.progress_end()
+
+        for obname in self._cache:
+            dimensions = self._cache[obname]
             if dimensions is None:
                 continue
             dimx, dimy, dimz = dimensions
@@ -82,9 +92,9 @@ class SelectByDimensions(bpy.types.Operator):
                 conditions.append(getattr(operator, self.z_op)(dimz, self.z))
             if conditions and all(conditions):
                 if self.action == 'SELECT':
-                    ob.select_set(True)
+                    bpy.data.objects.get(obname).select_set(True)
                 if self.action == 'DESELECT':
-                    ob.select_set(False)
+                    bpy.data.objects.get(obname).select_set(False)
         return {'FINISHED'}
 
     def invoke(self, context, event):
@@ -92,7 +102,7 @@ class SelectByDimensions(bpy.types.Operator):
         self.use_x = False
         self.use_y = False
         self.use_z = False
-        self._cache = {}
+        #print(self._cache)
         return wm.invoke_props_popup(self, event)
 
     def draw(self, context):
