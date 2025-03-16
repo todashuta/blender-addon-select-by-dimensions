@@ -4,16 +4,16 @@
 
 
 bl_info = {
-        "name": "Select By Dimensions",
-        "author": "todashuta",
-        "version": (0, 0, "2-dev"),
-        "blender": (3, 6, 0),
-        "location": "3D Viewport > Select Menu > Select By Dimensions",
-        "description": "Select/Deselect By Dimensions",
-        "warning": "",
-        "wiki_url": "",
-        "tracker_url": "",
-        "category": "Object"
+    "name": "Select By Dimensions",
+    "author": "todashuta",
+    "version": (0, 0, "2-dev"),
+    "blender": (3, 6, 0),
+    "location": "3D Viewport > Select Menu > Select By Dimensions",
+    "description": "Select/Deselect By Dimensions",
+    "warning": "",
+    "wiki_url": "",
+    "tracker_url": "",
+    "category": "Object"
 }
 
 
