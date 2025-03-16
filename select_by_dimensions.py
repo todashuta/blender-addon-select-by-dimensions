@@ -39,9 +39,9 @@ def get_evaluated_dimensions(depsgraph, obj):
 
 
 opfuncs = {
-    "gt": operator.gt,
-    "lt": operator.lt,
-    "eq": math.isclose,
+    "GT": operator.gt,
+    "LT": operator.lt,
+    "EQ": math.isclose,
 }
 
 
@@ -59,17 +59,17 @@ class SelectByDimensions(bpy.types.Operator):
     use_y: bpy.props.BoolProperty()
     use_z: bpy.props.BoolProperty(default=True)
 
-    x_op: bpy.props.EnumProperty(default='gt', items=[('eq', 'Equal', ''), ('gt', 'Greater', ''), ('lt', 'Less', '')])
-    y_op: bpy.props.EnumProperty(default='gt', items=[('eq', 'Equal', ''), ('gt', 'Greater', ''), ('lt', 'Less', '')])
-    z_op: bpy.props.EnumProperty(default='gt', items=[('eq', 'Equal', ''), ('gt', 'Greater', ''), ('lt', 'Less', '')])
+    x_op: bpy.props.EnumProperty(default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
+    y_op: bpy.props.EnumProperty(default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
+    z_op: bpy.props.EnumProperty(default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
 
     x: bpy.props.FloatProperty(step=10, min=0)
     y: bpy.props.FloatProperty(step=10, min=0)
     z: bpy.props.FloatProperty(step=10, min=0, default=5.0)
 
-    x_tol: bpy.props.FloatProperty(min=0.0, default=2.0)
-    y_tol: bpy.props.FloatProperty(min=0.0, default=2.0)
-    z_tol: bpy.props.FloatProperty(min=0.0, default=2.0)
+    x_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
+    y_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
+    z_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
 
     def __init__(self):
         self._dimensions_cache = {}
@@ -96,17 +96,17 @@ class SelectByDimensions(bpy.types.Operator):
             dimx, dimy, dimz = dimensions
             conditions = []
             if self.use_x:
-                if self.x_op == 'eq':
+                if self.x_op == 'EQ':
                     conditions.append(opfuncs[self.x_op](dimx, self.x, abs_tol=self.x_tol))
                 else:
                     conditions.append(opfuncs[self.x_op](dimx, self.x))
             if self.use_y:
-                if self.y_op == 'eq':
+                if self.y_op == 'EQ':
                     conditions.append(opfuncs[self.y_op](dimy, self.y, abs_tol=self.y_tol))
                 else:
                     conditions.append(opfuncs[self.y_op](dimy, self.y))
             if self.use_z:
-                if self.z_op == 'eq':
+                if self.z_op == 'EQ':
                     conditions.append(opfuncs[self.z_op](dimz, self.z, abs_tol=self.z_tol))
                 else:
                     conditions.append(opfuncs[self.z_op](dimz, self.z))
@@ -139,7 +139,7 @@ class SelectByDimensions(bpy.types.Operator):
         subrow.label(text="X")
         subrow.prop(self, "x_op", text="")
         subrow.prop(self, "x", slider=False, text="")
-        if self.x_op == 'eq':
+        if self.x_op == 'EQ':
             subrow.prop(self, "x_tol")
 
         row = layout.row()
@@ -149,7 +149,7 @@ class SelectByDimensions(bpy.types.Operator):
         subrow.label(text="Y")
         subrow.prop(self, "y_op", text="")
         subrow.prop(self, "y", slider=False, text="")
-        if self.y_op == 'eq':
+        if self.y_op == 'EQ':
             subrow.prop(self, "y_tol")
 
         row = layout.row()
@@ -159,7 +159,7 @@ class SelectByDimensions(bpy.types.Operator):
         subrow.label(text="Z")
         subrow.prop(self, "z_op", text="")
         subrow.prop(self, "z", slider=False, text="")
-        if self.z_op == 'eq':
+        if self.z_op == 'EQ':
             subrow.prop(self, "z_tol")
 
 
