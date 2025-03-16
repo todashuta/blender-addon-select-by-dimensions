@@ -18,6 +18,7 @@ bl_info = {
 
 
 import bpy
+import math
 import operator
 import numpy as np
 
@@ -37,6 +38,13 @@ def get_evaluated_dimensions(depsgraph, obj):
         return None
 
 
+opfuncs = {
+    "gt": operator.gt,
+    "lt": operator.lt,
+    "eq": math.isclose,
+}
+
+
 class SelectByDimensions(bpy.types.Operator):
     """Select/Deselect By Dimensions"""
     bl_idname = "object.select_by_dimensions"
@@ -51,13 +59,17 @@ class SelectByDimensions(bpy.types.Operator):
     use_y: bpy.props.BoolProperty()
     use_z: bpy.props.BoolProperty(default=True)
 
-    x_op: bpy.props.EnumProperty(default='gt', items=[('gt', 'Greater', ''), ('lt', 'Less', '')])
-    y_op: bpy.props.EnumProperty(default='gt', items=[('gt', 'Greater', ''), ('lt', 'Less', '')])
-    z_op: bpy.props.EnumProperty(default='gt', items=[('gt', 'Greater', ''), ('lt', 'Less', '')])
+    x_op: bpy.props.EnumProperty(default='gt', items=[('eq', 'Equal', ''), ('gt', 'Greater', ''), ('lt', 'Less', '')])
+    y_op: bpy.props.EnumProperty(default='gt', items=[('eq', 'Equal', ''), ('gt', 'Greater', ''), ('lt', 'Less', '')])
+    z_op: bpy.props.EnumProperty(default='gt', items=[('eq', 'Equal', ''), ('gt', 'Greater', ''), ('lt', 'Less', '')])
 
     x: bpy.props.FloatProperty(step=10, min=0)
     y: bpy.props.FloatProperty(step=10, min=0)
     z: bpy.props.FloatProperty(step=10, min=0, default=5.0)
+
+    x_tol: bpy.props.FloatProperty(min=0.0, default=2.0)
+    y_tol: bpy.props.FloatProperty(min=0.0, default=2.0)
+    z_tol: bpy.props.FloatProperty(min=0.0, default=2.0)
 
     def __init__(self):
         self._dimensions_cache = {}
@@ -65,8 +77,7 @@ class SelectByDimensions(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        active_object = context.active_object
-        return active_object and active_object.mode == 'OBJECT'
+        return context.selectable_objects
 
     def execute(self, context):
         if not self._dimensions_cache:
@@ -85,11 +96,20 @@ class SelectByDimensions(bpy.types.Operator):
             dimx, dimy, dimz = dimensions
             conditions = []
             if self.use_x:
-                conditions.append(getattr(operator, self.x_op)(dimx, self.x))
+                if self.x_op == 'eq':
+                    conditions.append(opfuncs[self.x_op](dimx, self.x, abs_tol=self.x_tol))
+                else:
+                    conditions.append(opfuncs[self.x_op](dimx, self.x))
             if self.use_y:
-                conditions.append(getattr(operator, self.y_op)(dimy, self.y))
+                if self.y_op == 'eq':
+                    conditions.append(opfuncs[self.y_op](dimy, self.y, abs_tol=self.y_tol))
+                else:
+                    conditions.append(opfuncs[self.y_op](dimy, self.y))
             if self.use_z:
-                conditions.append(getattr(operator, self.z_op)(dimz, self.z))
+                if self.z_op == 'eq':
+                    conditions.append(opfuncs[self.z_op](dimz, self.z, abs_tol=self.z_tol))
+                else:
+                    conditions.append(opfuncs[self.z_op](dimz, self.z))
             if conditions and all(conditions):
                 if self.action == 'SELECT':
                     bpy.data.objects.get(obname).select_set(True)
@@ -110,6 +130,7 @@ class SelectByDimensions(bpy.types.Operator):
         #layout.use_property_split = True
 
         layout.prop(self, "action")
+        layout.separator()
 
         row = layout.row()
         row.prop(self, "use_x", text="")
@@ -118,6 +139,8 @@ class SelectByDimensions(bpy.types.Operator):
         subrow.label(text="X")
         subrow.prop(self, "x_op", text="")
         subrow.prop(self, "x", slider=False, text="")
+        if self.x_op == 'eq':
+            subrow.prop(self, "x_tol")
 
         row = layout.row()
         row.prop(self, "use_y", text="")
@@ -126,6 +149,8 @@ class SelectByDimensions(bpy.types.Operator):
         subrow.label(text="Y")
         subrow.prop(self, "y_op", text="")
         subrow.prop(self, "y", slider=False, text="")
+        if self.y_op == 'eq':
+            subrow.prop(self, "y_tol")
 
         row = layout.row()
         row.prop(self, "use_z", text="")
@@ -134,6 +159,8 @@ class SelectByDimensions(bpy.types.Operator):
         subrow.label(text="Z")
         subrow.prop(self, "z_op", text="")
         subrow.prop(self, "z", slider=False, text="")
+        if self.z_op == 'eq':
+            subrow.prop(self, "z_tol")
 
 
 def menu_func(self, context):
