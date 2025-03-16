@@ -6,7 +6,7 @@
 bl_info = {
     "name": "Select By Dimensions",
     "author": "todashuta",
-    "version": (0, 0, 3),
+    "version": (0, 0, "3-dev"),
     "blender": (3, 6, 0),
     "location": "3D Viewport > Select Menu > Select By Dimensions",
     "description": "Select/Deselect By Dimensions",
@@ -71,9 +71,10 @@ class SelectByDimensions(bpy.types.Operator):
     y_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
     z_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._dimensions_cache = {}
-        #print("SelectByDimensions __init__ called", self)
+        #print("[debug] SelectByDimensions __init__ called")
 
     @classmethod
     def poll(cls, context):
