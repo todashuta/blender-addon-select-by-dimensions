@@ -6,7 +6,7 @@
 bl_info = {
     "name": "Select by Dimensions",
     "author": "todashuta",
-    "version": (0, 0, "3-dev"),
+    "version": (0, 0, 4),
     "blender": (3, 6, 0),
     "location": "3D Viewport > Select Menu > Select by Dimensions",
     "description": "Select/Deselect by Dimensions",
