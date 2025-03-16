@@ -60,7 +60,7 @@ class SelectByDimensions(bpy.types.Operator):
     z: bpy.props.FloatProperty(step=10, min=0, default=5.0)
 
     def __init__(self):
-        self._cache = {}
+        self._dimensions_cache = {}
         #print("SelectByDimensions __init__ called", self)
 
     @classmethod
@@ -69,17 +69,17 @@ class SelectByDimensions(bpy.types.Operator):
         return active_object and active_object.mode == 'OBJECT'
 
     def execute(self, context):
-        if not self._cache:
+        if not self._dimensions_cache:
             wm = context.window_manager
             wm.progress_begin(0, len(context.selectable_objects))
             depsgraph = context.evaluated_depsgraph_get()
             for i, ob in enumerate(context.selectable_objects):
-                self._cache[ob.name] = get_evaluated_dimensions(depsgraph, ob)
+                self._dimensions_cache[ob.name] = get_evaluated_dimensions(depsgraph, ob)
                 wm.progress_update(i)
             wm.progress_end()
 
-        for obname in self._cache:
-            dimensions = self._cache[obname]
+        for obname in self._dimensions_cache:
+            dimensions = self._dimensions_cache[obname]
             if dimensions is None:
                 continue
             dimx, dimy, dimz = dimensions
@@ -102,7 +102,7 @@ class SelectByDimensions(bpy.types.Operator):
         self.use_x = False
         self.use_y = False
         self.use_z = False
-        #print(self._cache)
+        #print(self._dimensions_cache)
         return wm.invoke_props_popup(self, event)
 
     def draw(self, context):
