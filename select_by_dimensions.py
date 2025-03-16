@@ -4,12 +4,12 @@
 
 
 bl_info = {
-    "name": "Select By Dimensions",
+    "name": "Select by Dimensions",
     "author": "todashuta",
     "version": (0, 0, "3-dev"),
     "blender": (3, 6, 0),
-    "location": "3D Viewport > Select Menu > Select By Dimensions",
-    "description": "Select/Deselect By Dimensions",
+    "location": "3D Viewport > Select Menu > Select by Dimensions",
+    "description": "Select/Deselect by Dimensions",
     "warning": "",
     "wiki_url": "",
     "tracker_url": "",
@@ -46,9 +46,9 @@ opfuncs = {
 
 
 class SelectByDimensions(bpy.types.Operator):
-    """Select/Deselect By Dimensions"""
+    """Select/Deselect by Dimensions"""
     bl_idname = "object.select_by_dimensions"
-    bl_label = "Select By Dimensions"
+    bl_label = "Select by Dimensions"
     bl_options = {'REGISTER', 'UNDO'}
 
     action: bpy.props.EnumProperty(name='Action', default='SELECT',
@@ -59,9 +59,9 @@ class SelectByDimensions(bpy.types.Operator):
     use_y: bpy.props.BoolProperty()
     use_z: bpy.props.BoolProperty(default=True)
 
-    x_op: bpy.props.EnumProperty(default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
-    y_op: bpy.props.EnumProperty(default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
-    z_op: bpy.props.EnumProperty(default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
+    x_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
+    y_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
+    z_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
 
     x: bpy.props.FloatProperty(step=10, min=0)
     y: bpy.props.FloatProperty(step=10, min=0)
@@ -169,11 +169,11 @@ def menu_func(self, context):
     layout.separator()
 
     op = layout.operator(
-            SelectByDimensions.bl_idname, text="Select By Dimensions")
+            SelectByDimensions.bl_idname, text="Select by Dimensions")
     op.action = 'SELECT'
 
     op = layout.operator(
-            SelectByDimensions.bl_idname, text="Deselect By Dimensions")
+            SelectByDimensions.bl_idname, text="Deselect by Dimensions")
     op.action = 'DESELECT'
 
 
