@@ -117,13 +117,17 @@ class SelectByDimensions(bpy.types.Operator):
                     bpy.data.objects.get(name).select_set(False)
         return {'FINISHED'}
 
-    def invoke(self, context, event):
-        wm = context.window_manager
-        self.use_x = False
-        self.use_y = False
-        self.use_z = False
-        #print(self._dimensions_cache)
-        return wm.invoke_props_popup(self, event)
+    #def invoke(self, context, event):
+    #    wm = context.window_manager
+    #    self.use_x = False
+    #    self.use_y = False
+    #    self.use_z = False
+    #    #print(self._dimensions_cache)
+    #    return wm.invoke_props_popup(self, event)
+    #def invoke(self, context, event):
+    #    wm = context.window_manager
+    #    #print(self._dimensions_cache)
+    #    return wm.invoke_props_dialog(self)
 
     def draw(self, context):
         layout = self.layout
