@@ -6,7 +6,7 @@
 bl_info = {
     "name": "Select by Dimensions",
     "author": "todashuta",
-    "version": (0, 0, 4),
+    "version": (0, 0, "4-dev"),
     "blender": (3, 6, 0),
     "location": "3D Viewport > Select Menu > Select by Dimensions",
     "description": "Select/Deselect by Dimensions",
@@ -90,8 +90,7 @@ class SelectByDimensions(bpy.types.Operator):
                 wm.progress_update(i)
             wm.progress_end()
 
-        for obname in self._dimensions_cache:
-            dimensions = self._dimensions_cache[obname]
+        for name, dimensions in self._dimensions_cache.items():
             if dimensions is None:
                 continue
             dimx, dimy, dimz = dimensions
@@ -113,9 +112,9 @@ class SelectByDimensions(bpy.types.Operator):
                     conditions.append(opfuncs[self.z_op](dimz, self.z))
             if conditions and all(conditions):
                 if self.action == 'SELECT':
-                    bpy.data.objects.get(obname).select_set(True)
+                    bpy.data.objects.get(name).select_set(True)
                 if self.action == 'DESELECT':
-                    bpy.data.objects.get(obname).select_set(False)
+                    bpy.data.objects.get(name).select_set(False)
         return {'FINISHED'}
 
     def invoke(self, context, event):
