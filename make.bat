@@ -2,26 +2,44 @@
 
 pushd %~dp0
 
-if not defined BLENDER_USER_SCRIPTS (
-	goto blender_user_scripts_not_defined
+if "%1" == "" (
+	echo Usage:
+	echo   make.bat build
+	echo   make.bat validate
+	echo   make.bat validate add-on-package.zip
+	goto EOF
 )
 
-if not exist "%BLENDER_USER_SCRIPTS%\addons\" (
-	goto addons_dir_not_exist
+set "BLENDER_EXE=blender-4.2.exe"
+where /q "%BLENDER_EXE%"
+if errorlevel 1 (
+	echo %BLENDER_EXE% not found!
+	goto ERR
 )
 
-set NAME=select_by_dimensions.py
+:argv_loop
+if NOT "%1" == "" (
+	if "%1" == "build" (
+		"%BLENDER_EXE%" --command extension build
+		if errorlevel 0 (
+			goto EOF
+		) else (
+			goto ERR
+		)
+	) else if "%1" == "validate" (
+		"%BLENDER_EXE%" --command extension validate %2
+		if errorlevel 0 (
+			goto EOF
+		) else (
+			goto ERR
+		)
+	)
 
-COPY ".\%NAME%" "%BLENDER_USER_SCRIPTS%\addons\%NAME%"
-goto end
+	shift /1
+	goto argv_loop
+)
 
-:blender_user_scripts_not_defined
-echo BLENDER_USER_SCRIPTS not defined
-goto end
-
-:addons_dir_not_exist
-echo addons directory does not exist
-goto end
-
-:end
-pause
+:EOF
+exit /b 0
+:ERR
+exit /b 1
