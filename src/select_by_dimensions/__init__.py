@@ -3,20 +3,6 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 
-bl_info = {
-    "name": "Select by Dimensions",
-    "author": "todashuta",
-    "version": (1, 0, 1),
-    "blender": (4, 2, 0),
-    "location": "3D Viewport > Select Menu > Select by Dimensions",
-    "description": "Select/Deselect by Dimensions",
-    "warning": "",
-    "wiki_url": "",
-    "tracker_url": "",
-    "category": "Object"
-}
-
-
 import bpy
 import math
 import operator
@@ -168,13 +154,29 @@ def menu_func(self, context):
     op.action = 'DESELECT'
 
 
+class SELECT_BY_DIMENSIONS_Preferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Location: 3D Viewport > Select Menu > Select by Dimensions")
+
+
+classes = (
+        SelectByDimensions,
+        SELECT_BY_DIMENSIONS_Preferences,
+)
+
+
 def register():
-    bpy.utils.register_class(SelectByDimensions)
+    for cls in classes:
+        bpy.utils.register_class(cls)
     bpy.types.VIEW3D_MT_select_object.append(menu_func)
 
 
 def unregister():
-    bpy.utils.unregister_class(SelectByDimensions)
+    for cls in reversed(classes):
+        bpy.utils.unregister_class(cls)
     bpy.types.VIEW3D_MT_select_object.remove(menu_func)
 
 

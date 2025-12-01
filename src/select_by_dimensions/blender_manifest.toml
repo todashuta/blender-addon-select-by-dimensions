@@ -3,12 +3,13 @@ schema_version = "1.0.0"
 # Example of manifest file for a Blender extension
 # Change the values according to your extension
 id = "select_by_dimensions"
-version = "1.0.1"
+version = "1.0.2"
 name = "Select by Dimensions"
 tagline = "Select/Deselect by Dimensions"
 maintainer = "todashuta <toda.shuta@gmail.com>"
 # Supported types: "add-on", "theme"
 type = "add-on"
+tags = ["Object"]
 
 # # Optional: link to documentation, support, source files, etc
 # website = "https://extensions.blender.org/add-ons/my-example-package/"
@@ -73,4 +74,5 @@ paths_exclude_pattern = [
   ".*",
   "*.zip",
   "/make.bat",
+  "/Makefile",
 ]
