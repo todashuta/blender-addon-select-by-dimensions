@@ -39,23 +39,23 @@ class SelectByDimensions(bpy.types.Operator):
 
     action: bpy.props.EnumProperty(name='Action', default='SELECT',
                                    items=[('SELECT', 'Select', ''),
-                                          ('DESELECT', 'Deselect', '')])
+                                          ('DESELECT', 'Deselect', '')]) # type: ignore
 
-    use_x: bpy.props.BoolProperty()
-    use_y: bpy.props.BoolProperty()
-    use_z: bpy.props.BoolProperty(default=True)
+    use_x: bpy.props.BoolProperty() # type: ignore
+    use_y: bpy.props.BoolProperty() # type: ignore
+    use_z: bpy.props.BoolProperty(default=True) # type: ignore
 
-    x_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
-    y_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
-    z_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')])
+    x_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')]) # type: ignore
+    y_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')]) # type: ignore
+    z_op: bpy.props.EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')]) # type: ignore
 
-    x: bpy.props.FloatProperty(step=10, min=0)
-    y: bpy.props.FloatProperty(step=10, min=0)
-    z: bpy.props.FloatProperty(step=10, min=0, default=5.0)
+    x: bpy.props.FloatProperty(step=10, min=0) # type: ignore
+    y: bpy.props.FloatProperty(step=10, min=0) # type: ignore
+    z: bpy.props.FloatProperty(step=10, min=0, default=5.0) # type: ignore
 
-    x_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
-    y_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
-    z_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0)
+    x_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0) # type: ignore
+    y_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0) # type: ignore
+    z_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0) # type: ignore
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
