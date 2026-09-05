@@ -9,7 +9,7 @@ import operator
 import numpy as np
 
 
-def get_evaluated_dimensions(depsgraph, obj):
+def get_evaluated_dimensions(depsgraph: bpy.types.Depsgraph, obj: bpy.types.Object):
     #print(obj)
     try:
         obj_eval = obj.evaluated_get(depsgraph)
@@ -59,16 +59,16 @@ class SelectByDimensions(bpy.types.Operator):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._dimensions_cache = {}
+        self._dimensions_cache: dict[str, tuple[float, float, float] | None] = {}
         #print("[debug] SelectByDimensions __init__ called")
 
     @classmethod
-    def poll(cls, context):
+    def poll(cls, context: bpy.types.Context) -> bool:
         return context.selectable_objects
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context):
         if not self._dimensions_cache:
-            wm = context.window_manager
+            wm: bpy.types.WindowManager = context.window_manager # type: ignore
             wm.progress_begin(0, len(context.selectable_objects))
             depsgraph = context.evaluated_depsgraph_get()
             for i, ob in enumerate(context.selectable_objects):
@@ -104,7 +104,7 @@ class SelectByDimensions(bpy.types.Operator):
         return {'FINISHED'}
 
     def draw(self, context):
-        layout = self.layout
+        layout: bpy.types.UILayout = self.layout # type: ignore
         #layout.use_property_split = True
 
         layout.prop(self, "action")
@@ -142,7 +142,7 @@ class SelectByDimensions(bpy.types.Operator):
 
 
 def menu_func(self, context):
-    layout = self.layout
+    layout: bpy.types.UILayout = self.layout
     layout.separator()
 
     op = layout.operator(
