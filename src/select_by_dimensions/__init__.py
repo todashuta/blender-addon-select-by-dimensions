@@ -64,7 +64,7 @@ class SelectByDimensions(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
-        return context.selectable_objects
+        return len(context.selectable_objects) > 0
 
     def execute(self, context: bpy.types.Context):
         if not self._dimensions_cache:
@@ -98,9 +98,9 @@ class SelectByDimensions(bpy.types.Operator):
                     conditions.append(opfuncs[self.z_op](dimz, self.z))
             if conditions and all(conditions):
                 if self.action == 'SELECT':
-                    bpy.data.objects.get(name).select_set(True)
+                    bpy.data.objects[name].select_set(True)
                 if self.action == 'DESELECT':
-                    bpy.data.objects.get(name).select_set(False)
+                    bpy.data.objects[name].select_set(False)
         return {'FINISHED'}
 
     def draw(self, context):
