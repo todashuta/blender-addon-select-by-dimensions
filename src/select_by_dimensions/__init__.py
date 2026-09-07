@@ -4,12 +4,28 @@
 
 
 import bpy
+from bpy.types import (
+    AddonPreferences,
+    Context,
+    Depsgraph,
+    Object,
+    Operator,
+    UILayout,
+    VIEW3D_MT_select_object,
+    WindowManager,
+)
 import math
 import operator
 import numpy as np
 
 
-def get_evaluated_dimensions(depsgraph: bpy.types.Depsgraph, obj: bpy.types.Object):
+from typing import Literal
+OperatorResult = set[
+    Literal["RUNNING_MODAL", "CANCELLED", "FINISHED", "PASS_THROUGH", "INTERFACE"]
+]
+
+
+def get_evaluated_dimensions(depsgraph: Depsgraph, obj: Object) -> tuple[float, float, float] | None:
     #print(obj)
     try:
         obj_eval = obj.evaluated_get(depsgraph)
@@ -31,7 +47,7 @@ opfuncs = {
 }
 
 
-class SelectByDimensions(bpy.types.Operator):
+class SelectByDimensions(Operator):
     """Select/Deselect by Dimensions"""
     bl_idname = "object.select_by_dimensions"
     bl_label = "Select by Dimensions"
@@ -57,18 +73,18 @@ class SelectByDimensions(bpy.types.Operator):
     y_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0) # type: ignore
     z_tol: bpy.props.FloatProperty(name="Tolerance", min=0.0, default=2.0) # type: ignore
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._dimensions_cache: dict[str, tuple[float, float, float] | None] = {}
         #print("[debug] SelectByDimensions __init__ called")
 
     @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
+    def poll(cls, context: Context) -> bool:
         return len(context.selectable_objects) > 0
 
-    def execute(self, context: bpy.types.Context):
+    def execute(self, context: Context) -> OperatorResult:
         if not self._dimensions_cache:
-            wm: bpy.types.WindowManager = context.window_manager # type: ignore
+            wm: WindowManager = context.window_manager # type: ignore
             wm.progress_begin(0, len(context.selectable_objects))
             depsgraph = context.evaluated_depsgraph_get()
             for i, ob in enumerate(context.selectable_objects):
@@ -80,7 +96,7 @@ class SelectByDimensions(bpy.types.Operator):
             if dimensions is None:
                 continue
             dimx, dimy, dimz = dimensions
-            conditions = []
+            conditions: list[bool] = []
             if self.use_x:
                 if self.x_op == 'EQ':
                     conditions.append(math.isclose(dimx, self.x, abs_tol=self.x_tol))
@@ -103,8 +119,8 @@ class SelectByDimensions(bpy.types.Operator):
                     bpy.data.objects[name].select_set(False)
         return {'FINISHED'}
 
-    def draw(self, context):
-        layout: bpy.types.UILayout = self.layout # type: ignore
+    def draw(self, context: Context) -> None:
+        layout: UILayout = self.layout # type: ignore
         #layout.use_property_split = True
 
         layout.prop(self, "action")
@@ -141,8 +157,8 @@ class SelectByDimensions(bpy.types.Operator):
             subrow.prop(self, "z_tol")
 
 
-def menu_func(self, context):
-    layout: bpy.types.UILayout = self.layout
+def menu_func(self, context) -> None:
+    layout: UILayout = self.layout
     layout.separator()
 
     op = layout.operator(
@@ -154,10 +170,10 @@ def menu_func(self, context):
     op.action = 'DESELECT'
 
 
-class SELECT_BY_DIMENSIONS_Preferences(bpy.types.AddonPreferences):
+class SELECT_BY_DIMENSIONS_Preferences(AddonPreferences):
     bl_idname = __name__
 
-    def draw(self, context):
+    def draw(self, context: Context) -> None:
         layout = self.layout
         layout.label(text="Location: 3D Viewport > Select Menu > Select by Dimensions")
 
@@ -171,13 +187,13 @@ classes = (
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    bpy.types.VIEW3D_MT_select_object.append(menu_func)
+    VIEW3D_MT_select_object.append(menu_func)
 
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-    bpy.types.VIEW3D_MT_select_object.remove(menu_func)
+    VIEW3D_MT_select_object.remove(menu_func)
 
 
 if __name__ == "__main__":
