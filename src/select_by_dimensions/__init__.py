@@ -56,19 +56,19 @@ class SelectByDimensions(Operator):
     """Select/Deselect by Dimensions"""
     bl_idname = "object.select_by_dimensions"
     bl_label = "Select by Dimensions"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {"REGISTER", "UNDO"}
 
-    action: EnumProperty(name='Action', default='SELECT',
-                         items=[('SELECT', 'Select', ''),
-                                ('DESELECT', 'Deselect', '')]) # type: ignore
+    action: EnumProperty(name="Action", default="SELECT",
+                         items=[("SELECT", "Select", ""),
+                                ("DESELECT", "Deselect", "")]) # type: ignore
 
     use_x: BoolProperty() # type: ignore
     use_y: BoolProperty() # type: ignore
     use_z: BoolProperty(default=True) # type: ignore
 
-    x_op: EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')]) # type: ignore
-    y_op: EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')]) # type: ignore
-    z_op: EnumProperty(name="Compare", default='GT', items=[('EQ', 'Equal', ''), ('GT', 'Greater', ''), ('LT', 'Less', '')]) # type: ignore
+    x_op: EnumProperty(name="Compare", default="GT", items=[("EQ", "Equal", ""), ("GT", "Greater", ""), ("LT", "Less", "")]) # type: ignore
+    y_op: EnumProperty(name="Compare", default="GT", items=[("EQ", "Equal", ""), ("GT", "Greater", ""), ("LT", "Less", "")]) # type: ignore
+    z_op: EnumProperty(name="Compare", default="GT", items=[("EQ", "Equal", ""), ("GT", "Greater", ""), ("LT", "Less", "")]) # type: ignore
 
     x: FloatProperty(step=10, min=0) # type: ignore
     y: FloatProperty(step=10, min=0) # type: ignore
@@ -103,26 +103,26 @@ class SelectByDimensions(Operator):
             dimx, dimy, dimz = dimensions
             conditions: list[bool] = []
             if self.use_x:
-                if self.x_op == 'EQ':
+                if self.x_op == "EQ":
                     conditions.append(math.isclose(dimx, self.x, abs_tol=self.x_tol))
                 else:
                     conditions.append(opfuncs[self.x_op](dimx, self.x))
             if self.use_y:
-                if self.y_op == 'EQ':
+                if self.y_op == "EQ":
                     conditions.append(math.isclose(dimy, self.y, abs_tol=self.y_tol))
                 else:
                     conditions.append(opfuncs[self.y_op](dimy, self.y))
             if self.use_z:
-                if self.z_op == 'EQ':
+                if self.z_op == "EQ":
                     conditions.append(math.isclose(dimz, self.z, abs_tol=self.z_tol))
                 else:
                     conditions.append(opfuncs[self.z_op](dimz, self.z))
             if conditions and all(conditions):
-                if self.action == 'SELECT':
+                if self.action == "SELECT":
                     bpy.data.objects[name].select_set(True)
-                if self.action == 'DESELECT':
+                if self.action == "DESELECT":
                     bpy.data.objects[name].select_set(False)
-        return {'FINISHED'}
+        return {"FINISHED"}
 
     def draw(self, context: Context) -> None:
         layout: UILayout = self.layout # type: ignore
@@ -138,7 +138,7 @@ class SelectByDimensions(Operator):
         subrow.label(text="X")
         subrow.prop(self, "x_op", text="")
         subrow.prop(self, "x", slider=False, text="")
-        if self.x_op == 'EQ':
+        if self.x_op == "EQ":
             subrow.prop(self, "x_tol")
 
         row = layout.row()
@@ -148,7 +148,7 @@ class SelectByDimensions(Operator):
         subrow.label(text="Y")
         subrow.prop(self, "y_op", text="")
         subrow.prop(self, "y", slider=False, text="")
-        if self.y_op == 'EQ':
+        if self.y_op == "EQ":
             subrow.prop(self, "y_tol")
 
         row = layout.row()
@@ -158,7 +158,7 @@ class SelectByDimensions(Operator):
         subrow.label(text="Z")
         subrow.prop(self, "z_op", text="")
         subrow.prop(self, "z", slider=False, text="")
-        if self.z_op == 'EQ':
+        if self.z_op == "EQ":
             subrow.prop(self, "z_tol")
 
 
@@ -168,11 +168,11 @@ def menu_func(self, context) -> None:
 
     op = layout.operator(
             SelectByDimensions.bl_idname, text="Select by Dimensions")
-    op.action = 'SELECT'
+    op.action = "SELECT"
 
     op = layout.operator(
             SelectByDimensions.bl_idname, text="Deselect by Dimensions")
-    op.action = 'DESELECT'
+    op.action = "DESELECT"
 
 
 class SELECT_BY_DIMENSIONS_Preferences(AddonPreferences):
@@ -184,8 +184,8 @@ class SELECT_BY_DIMENSIONS_Preferences(AddonPreferences):
 
 
 classes = (
-        SelectByDimensions,
-        SELECT_BY_DIMENSIONS_Preferences,
+    SelectByDimensions,
+    SELECT_BY_DIMENSIONS_Preferences,
 )
 
 
