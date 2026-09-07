@@ -20,7 +20,7 @@ def get_evaluated_dimensions(depsgraph: bpy.types.Depsgraph, obj: bpy.types.Obje
         dimensions = np.maximum.reduce(vs) - np.minimum.reduce(vs)  # numpy便利
         return dimensions
     except RuntimeError:
-        print("Unsupported Object:", obj.name)
+        print(f"Unsupported Object: {obj.name}")
         return None
 
 
