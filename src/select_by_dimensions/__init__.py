@@ -27,7 +27,7 @@ def get_evaluated_dimensions(depsgraph: bpy.types.Depsgraph, obj: bpy.types.Obje
 opfuncs = {
     "GT": operator.gt,
     "LT": operator.lt,
-    "EQ": math.isclose,
+    #"EQ": math.isclose,
 }
 
 
@@ -83,17 +83,17 @@ class SelectByDimensions(bpy.types.Operator):
             conditions = []
             if self.use_x:
                 if self.x_op == 'EQ':
-                    conditions.append(opfuncs[self.x_op](dimx, self.x, abs_tol=self.x_tol))
+                    conditions.append(math.isclose(dimx, self.x, abs_tol=self.x_tol))
                 else:
                     conditions.append(opfuncs[self.x_op](dimx, self.x))
             if self.use_y:
                 if self.y_op == 'EQ':
-                    conditions.append(opfuncs[self.y_op](dimy, self.y, abs_tol=self.y_tol))
+                    conditions.append(math.isclose(dimy, self.y, abs_tol=self.y_tol))
                 else:
                     conditions.append(opfuncs[self.y_op](dimy, self.y))
             if self.use_z:
                 if self.z_op == 'EQ':
-                    conditions.append(opfuncs[self.z_op](dimz, self.z, abs_tol=self.z_tol))
+                    conditions.append(math.isclose(dimz, self.z, abs_tol=self.z_tol))
                 else:
                     conditions.append(opfuncs[self.z_op](dimz, self.z))
             if conditions and all(conditions):
