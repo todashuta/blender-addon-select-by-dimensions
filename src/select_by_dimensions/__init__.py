@@ -1,9 +1,19 @@
 # SPDX-FileCopyrightText: 2025 todashuta
 #
-# SPDX-License-Identifier: GPL-2.0-or-later
+# SPDX-License-Identifier: GPL-3.0-or-later
 
+
+import math
+import operator
+from typing import Literal
 
 import bpy
+import numpy as np
+from bpy.props import (
+    BoolProperty,
+    EnumProperty,
+    FloatProperty,
+)
 from bpy.types import (
     AddonPreferences,
     Context,
@@ -14,19 +24,22 @@ from bpy.types import (
     VIEW3D_MT_select_object,
     WindowManager,
 )
-from bpy.props import (
-    BoolProperty,
-    EnumProperty,
-    FloatProperty,
-)
-import math
-import operator
-import numpy as np
 
-
-from typing import Literal
 OperatorResult = set[
     Literal["RUNNING_MODAL", "CANCELLED", "FINISHED", "PASS_THROUGH", "INTERFACE"]
+]
+
+AXES = ("x", "y", "z")
+
+ACTION_ITEMS = [
+    ("SELECT", "Select", ""),
+    ("DESELECT", "Deselect", ""),
+]
+
+COMPARE_ITEMS = [
+    ("EQ", "Equal", ""),
+    ("GT", "Greater", ""),
+    ("LT", "Less", ""),
 ]
 
 
@@ -56,19 +69,19 @@ class SelectByDimensions(Operator):
     """Select/Deselect by Dimensions"""
     bl_idname = "object.select_by_dimensions"
     bl_label = "Select by Dimensions"
-    bl_options = {"REGISTER", "UNDO"}
+    # Blender はクラス属性の set を読む。ClassVar にすると ty が基底クラスの
+    # インスタンス変数の上書きだと判定するので、ruff 側だけ抑制する。
+    bl_options = {"REGISTER", "UNDO"}  # noqa: RUF012
 
-    action: EnumProperty(name="Action", default="SELECT",
-                         items=[("SELECT", "Select", ""),
-                                ("DESELECT", "Deselect", "")]) # type: ignore
+    action: EnumProperty(name="Action", default="SELECT", items=ACTION_ITEMS)  # type: ignore
 
     use_x: BoolProperty() # type: ignore
     use_y: BoolProperty() # type: ignore
     use_z: BoolProperty(default=True) # type: ignore
 
-    x_op: EnumProperty(name="Compare", default="GT", items=[("EQ", "Equal", ""), ("GT", "Greater", ""), ("LT", "Less", "")]) # type: ignore
-    y_op: EnumProperty(name="Compare", default="GT", items=[("EQ", "Equal", ""), ("GT", "Greater", ""), ("LT", "Less", "")]) # type: ignore
-    z_op: EnumProperty(name="Compare", default="GT", items=[("EQ", "Equal", ""), ("GT", "Greater", ""), ("LT", "Less", "")]) # type: ignore
+    x_op: EnumProperty(name="Compare", default="GT", items=COMPARE_ITEMS)  # type: ignore
+    y_op: EnumProperty(name="Compare", default="GT", items=COMPARE_ITEMS)  # type: ignore
+    z_op: EnumProperty(name="Compare", default="GT", items=COMPARE_ITEMS)  # type: ignore
 
     x: FloatProperty(step=10, min=0) # type: ignore
     y: FloatProperty(step=10, min=0) # type: ignore
@@ -97,32 +110,30 @@ class SelectByDimensions(Operator):
                 wm.progress_update(i)
             wm.progress_end()
 
+        select = self.action == "SELECT"
         for name, dimensions in self._dimensions_cache.items():
             if dimensions is None:
                 continue
-            dimx, dimy, dimz = dimensions
-            conditions: list[bool] = []
-            if self.use_x:
-                if self.x_op == "EQ":
-                    conditions.append(math.isclose(dimx, self.x, abs_tol=self.x_tol))
-                else:
-                    conditions.append(opfuncs[self.x_op](dimx, self.x))
-            if self.use_y:
-                if self.y_op == "EQ":
-                    conditions.append(math.isclose(dimy, self.y, abs_tol=self.y_tol))
-                else:
-                    conditions.append(opfuncs[self.y_op](dimy, self.y))
-            if self.use_z:
-                if self.z_op == "EQ":
-                    conditions.append(math.isclose(dimz, self.z, abs_tol=self.z_tol))
-                else:
-                    conditions.append(opfuncs[self.z_op](dimz, self.z))
-            if conditions and all(conditions):
-                if self.action == "SELECT":
-                    bpy.data.objects[name].select_set(True)
-                if self.action == "DESELECT":
-                    bpy.data.objects[name].select_set(False)
+            if self._matches(dimensions):
+                bpy.data.objects[name].select_set(select)
         return {"FINISHED"}
+
+    def _matches(self, dimensions: tuple[float, float, float]) -> bool:
+        checked = False
+        for axis, size in zip(AXES, dimensions):
+            if not getattr(self, f"use_{axis}"):
+                continue
+            checked = True
+
+            target = getattr(self, axis)
+            if getattr(self, f"{axis}_op") == "EQ":
+                if not math.isclose(size, target, abs_tol=getattr(self, f"{axis}_tol")):
+                    return False
+            elif not opfuncs[getattr(self, f"{axis}_op")](size, target):
+                return False
+
+        # どの軸も有効になっていなければ何も選ばない。全部選ぶより安全側に倒す。
+        return checked
 
     def draw(self, context: Context) -> None:
         layout: UILayout = self.layout # type: ignore
