@@ -7,6 +7,7 @@ if "%1" == "" (
 	echo   make.bat build
 	echo   make.bat validate
 	echo   make.bat validate add-on-package.zip
+	echo   make.bat test
 	goto EOF
 )
 
@@ -25,6 +26,10 @@ if NOT "%1" == "" (
 		goto EOF
 	) else if "%1" == "validate" (
 		"%BLENDER_EXE%" --command extension validate %2
+		if errorlevel 1 goto ERR
+		goto EOF
+	) else if "%1" == "test" (
+		"%BLENDER_EXE%" --background --factory-startup --python %~dp0..\..\tests\test_select_by_dimensions.py
 		if errorlevel 1 goto ERR
 		goto EOF
 	)
