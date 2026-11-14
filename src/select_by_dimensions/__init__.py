@@ -117,17 +117,17 @@ class SelectByDimensions(Operator):
         # Blender はオペレータの __init__ を複数回呼ぶことがある。__init__ で
         # キャッシュを作ると redo のたびに空に戻るので、execute の初回で作る。
         if not hasattr(self, "_dimensions_cache"):
-            self._dimensions_cache: dict[str, np.ndarray | None] = {}
+            self._dimensions_cache: dict[Object, np.ndarray | None] = {}
 
         if not self._dimensions_cache:
             self._measure(context)
 
         select = self.action == "SELECT"
-        for name, dimensions in self._dimensions_cache.items():
+        for ob, dimensions in self._dimensions_cache.items():
             if dimensions is None:
                 continue
             if self._matches(dimensions):
-                bpy.data.objects[name].select_set(select)
+                ob.select_set(select)
         return {"FINISHED"}
 
     def _measure(self, context: Context) -> None:
@@ -139,7 +139,7 @@ class SelectByDimensions(Operator):
             depsgraph = context.evaluated_depsgraph_get()
             for i, ob in enumerate(targets):
                 dimensions = get_evaluated_dimensions(depsgraph, ob)
-                self._dimensions_cache[ob.name] = dimensions
+                self._dimensions_cache[ob] = dimensions
                 if dimensions is None:
                     skipped += 1
                 wm.progress_update(i)
