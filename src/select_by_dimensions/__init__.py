@@ -123,7 +123,11 @@ class SelectByDimensions(Operator):
             self._measure(context)
 
         select = self.action == "SELECT"
-        for ob, dimensions in self._dimensions_cache.items():
+        # キャッシュには削除済みのオブジェクトが残っていることがある。
+        # その StructRNA を触ると ReferenceError になるので、いまのシーンに
+        # いるオブジェクトだけを回す。
+        for ob in context.selectable_objects:
+            dimensions = self._dimensions_cache.get(ob)
             if dimensions is None:
                 continue
             if self._matches(dimensions):
