@@ -111,7 +111,7 @@ class SelectByDimensions(Operator):
 
     @classmethod
     def poll(cls, context: Context) -> bool:
-        return len(context.selectable_objects) > 0
+        return context.mode == "OBJECT" and len(context.selectable_objects) > 0
 
     def execute(self, context: Context) -> OperatorResult:
         # Blender はオペレータの __init__ を複数回呼ぶことがある。__init__ で
@@ -120,13 +120,7 @@ class SelectByDimensions(Operator):
             self._dimensions_cache: dict[str, np.ndarray | None] = {}
 
         if not self._dimensions_cache:
-            wm: WindowManager = context.window_manager # type: ignore
-            wm.progress_begin(0, len(context.selectable_objects))
-            depsgraph = context.evaluated_depsgraph_get()
-            for i, ob in enumerate(context.selectable_objects):
-                self._dimensions_cache[ob.name] = get_evaluated_dimensions(depsgraph, ob)
-                wm.progress_update(i)
-            wm.progress_end()
+            self._measure(context)
 
         select = self.action == "SELECT"
         for name, dimensions in self._dimensions_cache.items():
@@ -135,6 +129,27 @@ class SelectByDimensions(Operator):
             if self._matches(dimensions):
                 bpy.data.objects[name].select_set(select)
         return {"FINISHED"}
+
+    def _measure(self, context: Context) -> None:
+        wm: WindowManager = context.window_manager # type: ignore
+        targets = context.selectable_objects
+        wm.progress_begin(0, len(targets))
+        skipped = 0
+        try:
+            depsgraph = context.evaluated_depsgraph_get()
+            for i, ob in enumerate(targets):
+                dimensions = get_evaluated_dimensions(depsgraph, ob)
+                self._dimensions_cache[ob.name] = dimensions
+                if dimensions is None:
+                    skipped += 1
+                wm.progress_update(i)
+        finally:
+            # 途中で例外が出てもプログレスバーを閉じる。
+            wm.progress_end()
+
+        if skipped:
+            # 測れないものは黙って飛ばすと理由が分からないので知らせる。
+            self.report({"INFO"}, f"{skipped} object(s) skipped: no dimensions available")
 
     def _matches(self, dimensions: np.ndarray) -> bool:
         checked = False
@@ -160,48 +175,30 @@ class SelectByDimensions(Operator):
         layout.prop(self, "action")
         layout.separator()
 
-        row = layout.row()
-        row.prop(self, "use_x", text="")
-        subrow = row.row()
-        subrow.enabled = self.use_x
-        subrow.label(text="X")
-        subrow.prop(self, "x_op", text="")
-        subrow.prop(self, "x", slider=False, text="")
-        if self.x_op == "EQ":
-            subrow.prop(self, "x_tol")
+        for axis in AXES:
+            row = layout.row()
+            row.prop(self, f"use_{axis}", text="")
 
-        row = layout.row()
-        row.prop(self, "use_y", text="")
-        subrow = row.row()
-        subrow.enabled = self.use_y
-        subrow.label(text="Y")
-        subrow.prop(self, "y_op", text="")
-        subrow.prop(self, "y", slider=False, text="")
-        if self.y_op == "EQ":
-            subrow.prop(self, "y_tol")
-
-        row = layout.row()
-        row.prop(self, "use_z", text="")
-        subrow = row.row()
-        subrow.enabled = self.use_z
-        subrow.label(text="Z")
-        subrow.prop(self, "z_op", text="")
-        subrow.prop(self, "z", slider=False, text="")
-        if self.z_op == "EQ":
-            subrow.prop(self, "z_tol")
+            subrow = row.row()
+            subrow.enabled = getattr(self, f"use_{axis}")
+            subrow.label(text=axis.upper())
+            subrow.prop(self, f"{axis}_op", text="")
+            subrow.prop(self, f"{axis}", slider=False, text="")
+            if getattr(self, f"{axis}_op") == "EQ":
+                subrow.prop(self, f"{axis}_tol")
 
 
 def menu_func(self, context) -> None:
     layout: UILayout = self.layout
     layout.separator()
 
-    op = layout.operator(
+    select_op = layout.operator(
             SelectByDimensions.bl_idname, text="Select by Dimensions")
-    op.action = "SELECT"
+    select_op.action = "SELECT"
 
-    op = layout.operator(
+    deselect_op = layout.operator(
             SelectByDimensions.bl_idname, text="Deselect by Dimensions")
-    op.action = "DESELECT"
+    deselect_op.action = "DESELECT"
 
 
 class SELECT_BY_DIMENSIONS_Preferences(AddonPreferences):
