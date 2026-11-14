@@ -44,19 +44,36 @@ COMPARE_ITEMS = [
 ]
 
 
-def get_evaluated_dimensions(depsgraph: Depsgraph, obj: Object) -> tuple[float, float, float] | None:
-    #print(obj)
+def get_evaluated_dimensions(depsgraph: Depsgraph, obj: Object) -> np.ndarray | None:
+    """評価済みメッシュのワールド空間寸法を返す。測れないオブジェクトは None。
+
+    ジオメトリを持たないオブジェクト (Empty, Camera, Light など) は
+    to_mesh() が RuntimeError を投げるので、呼び出し側でスキップする。
+    """
+    obj_eval = obj.evaluated_get(depsgraph)
     try:
-        obj_eval = obj.evaluated_get(depsgraph)
-        mesh_from_eval = obj_eval.to_mesh()
-        vs = np.array([obj.matrix_world @ v.co
-                       for v in mesh_from_eval.vertices])
-        obj_eval.to_mesh_clear()
-        dimensions = np.maximum.reduce(vs) - np.minimum.reduce(vs)  # numpy便利
-        return dimensions
+        mesh = obj_eval.to_mesh()
     except RuntimeError:
-        print(f"Unsupported Object: {obj.name}")
         return None
+
+    # to_mesh() が成功したあとは、どの経路で抜けても to_mesh_clear() を通す。
+    # 途中の例外で解放を逃すとテンポラリメッシュが残り続けるため finally に置く。
+    try:
+        vertex_count = len(mesh.vertices)
+        if vertex_count == 0:
+            # 頂点ゼロだと max() が ValueError になる。
+            return None
+
+        # 頂点ごとに Python 側で行列積を回すと遅くなるので、座標をまとめて
+        # 取ってから numpy でアフィン変換する。
+        coords = np.empty(vertex_count * 3, dtype=np.float64)
+        mesh.vertices.foreach_get("co", coords)
+
+        matrix = np.array(obj_eval.matrix_world)
+        world = coords.reshape(vertex_count, 3) @ matrix[:3, :3].T + matrix[:3, 3]
+        return world.max(axis=0) - world.min(axis=0)
+    finally:
+        obj_eval.to_mesh_clear()
 
 
 # EQ は許容差つきで判定するので、ここには入れない。
@@ -100,7 +117,7 @@ class SelectByDimensions(Operator):
         # Blender はオペレータの __init__ を複数回呼ぶことがある。__init__ で
         # キャッシュを作ると redo のたびに空に戻るので、execute の初回で作る。
         if not hasattr(self, "_dimensions_cache"):
-            self._dimensions_cache: dict[str, tuple[float, float, float] | None] = {}
+            self._dimensions_cache: dict[str, np.ndarray | None] = {}
 
         if not self._dimensions_cache:
             wm: WindowManager = context.window_manager # type: ignore
@@ -119,7 +136,7 @@ class SelectByDimensions(Operator):
                 bpy.data.objects[name].select_set(select)
         return {"FINISHED"}
 
-    def _matches(self, dimensions: tuple[float, float, float]) -> bool:
+    def _matches(self, dimensions: np.ndarray) -> bool:
         checked = False
         for axis, size in zip(AXES, dimensions):
             if not getattr(self, f"use_{axis}"):
