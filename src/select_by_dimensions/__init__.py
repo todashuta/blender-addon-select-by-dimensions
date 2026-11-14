@@ -91,16 +91,16 @@ class SelectByDimensions(Operator):
     y_tol: FloatProperty(name="Tolerance", min=0.0, default=2.0) # type: ignore
     z_tol: FloatProperty(name="Tolerance", min=0.0, default=2.0) # type: ignore
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._dimensions_cache: dict[str, tuple[float, float, float] | None] = {}
-        #print("[debug] SelectByDimensions __init__ called")
-
     @classmethod
     def poll(cls, context: Context) -> bool:
         return len(context.selectable_objects) > 0
 
     def execute(self, context: Context) -> OperatorResult:
+        # Blender はオペレータの __init__ を複数回呼ぶことがある。__init__ で
+        # キャッシュを作ると redo のたびに空に戻るので、execute の初回で作る。
+        if not hasattr(self, "_dimensions_cache"):
+            self._dimensions_cache: dict[str, tuple[float, float, float] | None] = {}
+
         if not self._dimensions_cache:
             wm: WindowManager = context.window_manager # type: ignore
             wm.progress_begin(0, len(context.selectable_objects))
