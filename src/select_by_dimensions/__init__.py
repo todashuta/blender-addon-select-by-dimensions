@@ -117,18 +117,21 @@ class SelectByDimensions(Operator):
         # Blender はオペレータの __init__ を複数回呼ぶことがある。__init__ で
         # キャッシュを作ると redo のたびに空に戻るので、execute の初回で作る。
         if not hasattr(self, "_dimensions_cache"):
-            self._dimensions_cache: dict[Object, np.ndarray | None] = {}
+            self._dimensions_cache: dict[str, np.ndarray | None] = {}
 
         if not self._dimensions_cache:
             self._measure(context)
 
         select = self.action == "SELECT"
-        # キャッシュには削除済みのオブジェクトが残っていることがある。
-        # その StructRNA を触ると ReferenceError になるので、いまのシーンに
-        # いるオブジェクトだけを回す。
-        for ob in context.selectable_objects:
-            dimensions = self._dimensions_cache.get(ob)
+        # キーをオブジェクト自体にすると、Blender の undo で StructRNA の
+        # 参照が無効になったときにキャッシュがヒットせず、選択がすべて外れる。
+        # 名前は undo でも無効にならないので、名前から引き直す。
+        for name, dimensions in self._dimensions_cache.items():
             if dimensions is None:
+                continue
+            ob = bpy.data.objects.get(name)
+            if ob is None:
+                # 削除済みのオブジェクト。触ると ReferenceError になる。
                 continue
             if self._matches(dimensions):
                 ob.select_set(select)
@@ -143,7 +146,7 @@ class SelectByDimensions(Operator):
             depsgraph = context.evaluated_depsgraph_get()
             for i, ob in enumerate(targets):
                 dimensions = get_evaluated_dimensions(depsgraph, ob)
-                self._dimensions_cache[ob] = dimensions
+                self._dimensions_cache[ob.name] = dimensions
                 if dimensions is None:
                     skipped += 1
                 wm.progress_update(i)
