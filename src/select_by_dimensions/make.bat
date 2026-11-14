@@ -21,18 +21,12 @@ if errorlevel 1 (
 if NOT "%1" == "" (
 	if "%1" == "build" (
 		"%BLENDER_EXE%" --command extension build
-		if errorlevel 0 (
-			goto EOF
-		) else (
-			goto ERR
-		)
+		if errorlevel 1 goto ERR
+		goto EOF
 	) else if "%1" == "validate" (
 		"%BLENDER_EXE%" --command extension validate %2
-		if errorlevel 0 (
-			goto EOF
-		) else (
-			goto ERR
-		)
+		if errorlevel 1 goto ERR
+		goto EOF
 	)
 
 	shift /1

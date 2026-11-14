@@ -5,6 +5,7 @@
 
 import math
 import operator
+from collections.abc import Callable
 from typing import Literal
 
 import bpy
@@ -58,10 +59,10 @@ def get_evaluated_dimensions(depsgraph: Depsgraph, obj: Object) -> tuple[float, 
         return None
 
 
-opfuncs = {
+# EQ は許容差つきで判定するので、ここには入れない。
+COMPARE_FUNCS: dict[str, Callable[[float, float], bool]] = {
     "GT": operator.gt,
     "LT": operator.lt,
-    #"EQ": math.isclose,
 }
 
 
@@ -129,7 +130,7 @@ class SelectByDimensions(Operator):
             if getattr(self, f"{axis}_op") == "EQ":
                 if not math.isclose(size, target, abs_tol=getattr(self, f"{axis}_tol")):
                     return False
-            elif not opfuncs[getattr(self, f"{axis}_op")](size, target):
+            elif not COMPARE_FUNCS[getattr(self, f"{axis}_op")](size, target):
                 return False
 
         # どの軸も有効になっていなければ何も選ばない。全部選ぶより安全側に倒す。
