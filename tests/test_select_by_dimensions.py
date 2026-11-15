@@ -55,40 +55,40 @@ class SelectByDimensionsTest(unittest.TestCase):
         bpy.ops.object.select_all(action="DESELECT")
         bpy.ops.object.select_by_dimensions(action="SELECT", **kwargs)
 
-    def test_z_greater_selects_only_big_cube(self) -> None:
+    def test_Z寸法が5より大きい立方体だけが選ばれる(self) -> None:
         self.select(use_z=True, z_op="GT", z=5.0)
         self.assertEqual(selected_names(), ["CubeBig"])
 
-    def test_z_less_selects_only_small_cube(self) -> None:
+    def test_Z寸法が5より小さい立方体だけが選ばれる(self) -> None:
         self.select(use_z=True, z_op="LT", z=5.0)
         self.assertEqual(selected_names(), ["CubeSmall"])
 
-    def test_equal_within_tolerance_selects_big_cube(self) -> None:
+    def test_許容差内の等値判定で大きい立方体が選ばれる(self) -> None:
         self.select(use_x=True, x_op="EQ", x=10.0, x_tol=0.5)
         self.assertEqual(selected_names(), ["CubeBig"])
 
-    def test_equal_outside_tolerance_selects_nothing(self) -> None:
+    def test_許容差外の等値判定では何も選ばれない(self) -> None:
         self.select(use_x=True, x_op="EQ", x=10.5, x_tol=0.01)
         self.assertEqual(selected_names(), [])
 
-    def test_no_axis_enabled_selects_nothing(self) -> None:
+    def test_全軸が無効なら何も選ばれない(self) -> None:
         bpy.ops.object.select_by_dimensions(
             action="SELECT", use_x=False, use_y=False, use_z=False)
         self.assertEqual(selected_names(), [])
 
-    def test_deselect_only_clears_matching(self) -> None:
+    def test_DESELECTは条件に合うものだけ解除する(self) -> None:
         bpy.ops.object.select_all(action="SELECT")
         bpy.ops.object.select_by_dimensions(
             action="DESELECT", use_z=True, z_op="GT", z=5.0)
         self.assertEqual(selected_names(), ["CubeSmall"])
 
-    def test_empty_mesh_is_skipped(self) -> None:
+    def test_頂点ゼロのメッシュはスキップされる(self) -> None:
         bpy.context.scene.collection.objects.link(
             bpy.data.objects.new("EmptyMesh", bpy.data.meshes.new("empty_mesh")))
         self.select(use_z=True, z_op="GT", z=5.0)
         self.assertEqual(selected_names(), ["CubeBig"])
 
-    def test_modifier_is_reflected(self) -> None:
+    def test_モディファイアの結果が寸法に反映される(self) -> None:
         ob = bpy.data.objects["CubeSmall"]
         modifier = ob.modifiers.new("Array", "ARRAY")
         modifier.count = 3
@@ -97,7 +97,7 @@ class SelectByDimensionsTest(unittest.TestCase):
         self.assertTrue(np.allclose(
             m.get_evaluated_dimensions(depsgraph, ob), [3.0, 1.0, 1.0]))
 
-    def test_parent_rotation_is_reflected(self) -> None:
+    def test_親の回転が寸法に反映される(self) -> None:
         bpy.ops.object.empty_add(rotation=(0.0, 0.0, math.radians(45.0)))
         parent = bpy.context.active_object
         child = add_cube("Child", 1.0)
@@ -107,19 +107,19 @@ class SelectByDimensionsTest(unittest.TestCase):
             m.get_evaluated_dimensions(depsgraph, child),
             [math.sqrt(2.0), math.sqrt(2.0), 1.0]))
 
-    def test_negative_scale_is_absolute(self) -> None:
+    def test_負のスケールでも寸法は正の大きさになる(self) -> None:
         ob = bpy.data.objects["CubeBig"]
         ob.scale = (-1.0, 1.0, 1.0)
         depsgraph = bpy.context.evaluated_depsgraph_get()
         self.assertTrue(np.allclose(
             m.get_evaluated_dimensions(depsgraph, ob), [10.0, 10.0, 10.0]))
 
-    def test_renamed_object_is_still_selected(self) -> None:
+    def test_改名しても同じオブジェクトが選ばれる(self) -> None:
         bpy.data.objects["CubeBig"].name = "RenamedBig"
         self.select(use_z=True, z_op="GT", z=5.0)
         self.assertEqual(selected_names(), ["RenamedBig"])
 
-    def test_deleted_object_does_not_break(self) -> None:
+    def test_削除されたオブジェクトがあっても落ちない(self) -> None:
         bpy.data.objects.remove(bpy.data.objects["CubeBig"], do_unlink=True)
         self.select(use_z=True, z_op="GT", z=5.0)
         self.assertEqual(selected_names(), [])
